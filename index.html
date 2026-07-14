@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Spesa</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Spesa">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="theme-color" content="#000000">
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --surface-2: #2c2c2e;
+    --text: #ffffff;
+    --text-secondary: #8e8e93;
+    --accent: #0a84ff;
+    --danger: #ff453a;
+    --success: #32d74b;
+    --separator: #38383a;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    height: 100%;
+    overscroll-behavior-y: none;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* ---------- Sign in screen ---------- */
+
+  .signin-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 32px;
+    text-align: center;
+  }
+
+  .signin-emoji {
+    font-size: 64px;
+    margin-bottom: 8px;
+  }
+
+  .signin-title {
+    font-size: 34px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+  }
+
+  .signin-subtitle {
+    color: var(--text-secondary);
+    font-size: 17px;
+    margin: 0 0 48px 0;
+  }
+
+  .signin-button {
+    width: 100%;
+    max-width: 320px;
+    padding: 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .signin-error {
+    color: var(--danger);
+    font-size: 14px;
+    margin-bottom: 16px;
+    max-width: 320px;
+  }
+
+  /* ---------- Nav bar ---------- */
+
+  .navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    padding-top: max(14px, env(safe-area-inset-top));
+    border-bottom: 0.5px solid var(--separator);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+  }
+
+  .navbar-title {
+    font-size: 17px;
+    font-weight: 600;
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 8px;
+  }
+
+  .nav-button {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 15px;
+    padding: 6px 4px;
+    min-width: 60px;
+  }
+
+  .nav-button.left { text-align: left; }
+  .nav-button.right { text-align: right; font-weight: 600; }
+  .nav-button:disabled { color: var(--text-secondary); }
+
+  /* ---------- Form ---------- */
+
+  .form {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 40px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .section {
+    margin-top: 24px;
+  }
+
+  .section-header {
+    font-size: 13px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding: 0 16px 6px 16px;
+  }
+
+  .section-body {
+    background: var(--surface);
+    border-top: 0.5px solid var(--separator);
+    border-bottom: 0.5px solid var(--separator);
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    min-height: 22px;
+  }
+
+  .row + .row {
+    border-top: 0.5px solid var(--separator);
+  }
+
+  .date-row {
+    justify-content: space-between;
+    cursor: pointer;
+  }
+
+  .date-row-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .date-icon {
+    color: var(--accent);
+    font-size: 18px;
+  }
+
+  .chevron {
+    color: var(--text-secondary);
+    font-size: 13px;
+    transition: transform 0.2s ease;
+  }
+
+  .chevron.expanded {
+    transform: rotate(180deg);
+  }
+
+  .date-picker-wrapper {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.25s ease;
+  }
+
+  .date-picker-wrapper.expanded {
+    max-height: 400px;
+  }
+
+  input[type="date"] {
+    width: 100%;
+    background: var(--surface);
+    border: none;
+    color: var(--text);
+    font-size: 17px;
+    padding: 12px 16px;
+    font-family: inherit;
+    color-scheme: dark;
+  }
+
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 17px;
+    font-family: inherit;
+    outline: none;
+  }
+
+  input[type="number"] {
+    font-size: 22px;
+  }
+
+  input::placeholder {
+    color: var(--text-secondary);
+  }
+
+  select {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 17px;
+    font-family: inherit;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  select option {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  .select-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .select-wrapper .chevron-down {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-left: 8px;
+  }
+
+  /* ---------- Toast / Alert ---------- */
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .alert-box {
+    background: var(--surface-2);
+    border-radius: 14px;
+    width: 270px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .alert-title {
+    font-size: 17px;
+    font-weight: 600;
+    padding: 20px 16px 4px 16px;
+  }
+
+  .alert-message {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 0 16px 20px 16px;
+  }
+
+  .alert-button {
+    width: 100%;
+    padding: 12px;
+    background: none;
+    border: none;
+    border-top: 0.5px solid var(--separator);
+    color: var(--accent);
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- SIGN IN SCREEN -->
+  <div id="signinScreen" class="signin-screen">
+    <div class="signin-emoji">💶</div>
+    <div class="signin-title">Spesa</div>
+    <div class="signin-subtitle">Traccia le tue spese</div>
+    <div id="signinError" class="signin-error hidden"></div>
+    <button id="signinButton" class="signin-button">
+      <span>Accedi con Google</span>
+    </button>
+  </div>
+
+  <!-- EXPENSE ENTRY SCREEN -->
+  <div id="entryScreen" class="hidden" style="display:flex; flex-direction:column; flex:1;">
+    <div class="navbar">
+      <button id="signOutButton" class="nav-button left">Sign Out</button>
+      <div id="navTitle" class="navbar-title">Nuova spesa</div>
+      <button id="submitButton" class="nav-button right">Aggiungi</button>
+    </div>
+
+    <div class="form">
+
+      <div class="section">
+        <div class="section-header">Data</div>
+        <div class="section-body">
+          <div class="row date-row" id="dateToggle">
+            <div class="date-row-left">
+              <span class="date-icon">📅</span>
+              <span id="dateLabel">Oggi</span>
+            </div>
+            <span class="chevron" id="dateChevron">▼</span>
+          </div>
+          <div class="date-picker-wrapper" id="datePickerWrapper">
+            <input type="date" id="dateInput">
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">Nome spesa</div>
+        <div class="section-body">
+          <div class="row">
+            <input type="text" id="nameInput" placeholder="Es. Cena al ristorante">
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">Categoria</div>
+        <div class="section-body">
+          <div class="row">
+            <div class="select-wrapper">
+              <select id="categorySelect"></select>
+              <span class="chevron-down">▼</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">Importo (€)</div>
+        <div class="section-body">
+          <div class="row">
+            <input type="number" id="amountInput" placeholder="0,00" inputmode="decimal" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">Note (opzionale)</div>
+        <div class="section-body">
+          <div class="row">
+            <input type="text" id="noteInput" placeholder="Descrizione">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ALERT OVERLAY -->
+<div id="overlay" class="overlay">
+  <div class="alert-box">
+    <div id="alertTitle" class="alert-title"></div>
+    <div id="alertMessage" class="alert-message"></div>
+    <button id="alertButton" class="alert-button">OK</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="categories.js"></script>
+<script src="sheets.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
