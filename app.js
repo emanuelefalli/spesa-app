@@ -121,6 +121,9 @@ dateInput.addEventListener("change", () => {
 });
 
 nameInput.addEventListener("input", updateNavTitle);
+amountInput.addEventListener("input", () => {
+  amountInput.value = amountInput.value.replace(/[^0-9.,]/g, "");
+});
 amountInput.addEventListener("input", updateSubmitState);
 
 alertButton.addEventListener("click", hideAlert);
