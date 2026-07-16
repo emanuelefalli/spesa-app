@@ -1,15 +1,12 @@
 const SheetsClient = {
   async appendExpense({ date, name, amount, category }) {
-    const [year, month, day] = date.split("-");
-    const dateString = `${day}/${month}`;
-
     const response = await fetch(CONFIG.scriptUrl, {
       method: "POST",
       // text/plain avoids a CORS preflight, which Apps Script web apps don't handle
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         key: CONFIG.secretKey,
-        date: dateString,
+        date: date,
         name: name,
         amount: amount,
         category: category

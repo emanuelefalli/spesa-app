@@ -5,7 +5,7 @@ const SHEET_NAME = "Spese";
 
 // Cambia questa chiave con una stringa a tua scelta, lunga e casuale.
 // Deve essere identica al valore di SECRET_KEY in config.js della webapp.
-const SECRET_KEY = "CAMBIA_QUESTA_CHIAVE_1234567890";
+const SECRET_KEY = "EmanueleFalli99*xyz@";
 
 function doPost(e) {
   try {
@@ -15,13 +15,21 @@ function doPost(e) {
       return jsonResponse({ success: false, error: "Non autorizzato" });
     }
 
-    const date = params.date;
     const name = params.name;
     const amount = params.amount;
     const category = params.category;
 
-    if (!date || amount === undefined || !category) {
+    if (!params.date || amount === undefined || !category) {
       return jsonResponse({ success: false, error: "Dati mancanti" });
+    }
+
+    // params.date arrives as "YYYY-MM-DD"; parse it as a local date so the
+    // year is preserved and no UTC/timezone shift moves it to the wrong day.
+    const [y, m, d] = params.date.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+
+    if (isNaN(date.getTime())) {
+      return jsonResponse({ success: false, error: "Data non valida" });
     }
 
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
