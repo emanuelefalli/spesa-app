@@ -1,16 +1,11 @@
 // ---------- Elements ----------
 
-const signinScreen   = document.getElementById("signinScreen");
-const signinButton   = document.getElementById("signinButton");
-const signinError    = document.getElementById("signinError");
-
 const entryScreen    = document.getElementById("entryScreen");
-const signOutButton  = document.getElementById("signOutButton");
 const submitButton   = document.getElementById("submitButton");
 const navTitle       = document.getElementById("navTitle");
 
-const dateToggle         = document.getElementById("dateToggle");
-const dateChevron        = document.getElementById("dateChevron");
+const dateToggle          = document.getElementById("dateToggle");
+const dateChevron         = document.getElementById("dateChevron");
 const datePickerWrapper   = document.getElementById("datePickerWrapper");
 const dateInput           = document.getElementById("dateInput");
 const dateLabel           = document.getElementById("dateLabel");
@@ -33,7 +28,7 @@ let submitting = false;
 
 function populateCategories() {
   categorySelect.innerHTML = "";
-  CATEGORIES.forEach((cat, index) => {
+  CATEGORIES.forEach((cat) => {
     const option = document.createElement("option");
     option.value = cat.name;
     option.textContent = `${cat.emoji} ${cat.name}`;
@@ -97,16 +92,6 @@ function resetForm() {
   updateSubmitState();
 }
 
-function showEntryScreen() {
-  signinScreen.classList.add("hidden");
-  entryScreen.classList.remove("hidden");
-}
-
-function showSigninScreen() {
-  entryScreen.classList.add("hidden");
-  signinScreen.classList.remove("hidden");
-}
-
 // ---------- Event wiring ----------
 
 dateToggle.addEventListener("click", () => {
@@ -121,34 +106,13 @@ dateInput.addEventListener("change", () => {
 });
 
 nameInput.addEventListener("input", updateNavTitle);
+
 amountInput.addEventListener("input", () => {
   amountInput.value = amountInput.value.replace(/[^0-9.,]/g, "");
+  updateSubmitState();
 });
-amountInput.addEventListener("input", updateSubmitState);
 
 alertButton.addEventListener("click", hideAlert);
-
-signOutButton.addEventListener("click", () => {
-  SheetsClient.signOut();
-  showSigninScreen();
-});
-
-signinButton.addEventListener("click", async () => {
-  signinError.classList.add("hidden");
-  signinButton.disabled = true;
-  signinButton.textContent = "Connessione…";
-
-  try {
-    await SheetsClient.signIn();
-    showEntryScreen();
-  } catch (err) {
-    signinError.textContent = err.message || "Errore durante il login.";
-    signinError.classList.remove("hidden");
-  } finally {
-    signinButton.disabled = false;
-    signinButton.innerHTML = "<span>Accedi con Google</span>";
-  }
-});
 
 submitButton.addEventListener("click", async () => {
   const amount = parseAmount(amountInput.value);
@@ -156,6 +120,7 @@ submitButton.addEventListener("click", async () => {
 
   submitting = true;
   updateSubmitState();
+  const originalLabel = submitButton.textContent;
   submitButton.innerHTML = '<div class="spinner"></div>';
 
   const name = nameInput.value.trim() !== "" ? nameInput.value.trim() : noteInput.value.trim();
@@ -174,7 +139,7 @@ submitButton.addEventListener("click", async () => {
     showAlert("Errore", err.message || "Si è verificato un errore.");
   } finally {
     submitting = false;
-    submitButton.textContent = "Aggiungi";
+    submitButton.textContent = originalLabel;
     updateSubmitState();
   }
 });
@@ -185,15 +150,6 @@ populateCategories();
 dateInput.value = todayDateString();
 updateDateLabel();
 
-SheetsClient.init(() => {
-  if (SheetsClient.isAuthenticated()) {
-    showEntryScreen();
-  } else {
-    showSigninScreen();
-  }
-});
-
-// Register service worker for PWA install support (best-effort, ignore failures)
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }

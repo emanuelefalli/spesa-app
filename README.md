@@ -1,84 +1,90 @@
-# Spesa – Web App
+# Spesa – Web App (senza login)
 
-Versione web dell'app, nessuna firma Apple, nessun rinnovo settimanale.
-Funziona in Safari su iPhone e si può installare sulla home screen come una PWA.
-
-## Setup (10 minuti)
-
-### 1. Crea un nuovo OAuth Client ID di tipo "Web application"
-
-Nello stesso progetto Google Cloud che hai già:
-
-1. https://console.cloud.google.com → **Credenziali**
-2. **Crea credenziali → ID client OAuth**
-3. Tipo applicazione: **Applicazione web** (non iOS)
-4. Nome: "Spesa Web"
-5. Sotto **Origini JavaScript autorizzate** aggiungi l'URL dove ospiterai la pagina, es:
-   ```
-   https://tuonome.github.io
-   ```
-6. **Crea** → copia il **Client ID**
-
-Nota: questo è un client ID diverso da quello iOS — il tipo "Web application" non usa redirect URI custom, solo l'origine.
-
-### 2. Configura il file
-
-Apri `config.js` e incolla il client ID:
-
-```js
-const CONFIG = {
-  clientId: "IL_TUO_CLIENT_ID.apps.googleusercontent.com",
-  ...
-};
-```
-
-### 3. Ospita la pagina su GitHub Pages (gratis)
-
-Se hai già un repository GitHub Pages (come per Wanderlines), puoi:
-
-1. Crea un nuovo repository, es. `spesa-app`
-2. Carica tutti i file di questa cartella (`index.html`, `config.js`, `categories.js`, `sheets.js`, `app.js`, `manifest.json`, `sw.js`)
-3. Vai su **Settings → Pages** → Source: `main` branch, root
-4. Dopo qualche minuto sarà live su `https://tuonome.github.io/spesa-app/`
-
-### 4. Aggiungi un'icona (opzionale)
-
-Metti un file `icon.png` (1024×1024) nella stessa cartella per l'icona della home screen.
-
-### 5. Installa sulla home screen dell'iPhone
-
-1. Apri l'URL in **Safari** (deve essere Safari, non Chrome, per l'installazione PWA su iOS)
-2. Tocca l'icona di condivisione (quadrato con freccia in su)
-3. **Aggiungi a Home**
-4. L'icona apparirà come un'app vera, a schermo intero, senza barra Safari
-
----
+Nessun OAuth, nessun login Google sul telefono, nessuna scadenza.
+La webapp chiama uno script Google Apps Script che scrive nel foglio per te.
 
 ## Come funziona
 
-- Login Google tramite **Google Identity Services** (`google.accounts.oauth2`), token client — nessun server necessario, tutto lato client
-- Il token di accesso è salvato in `sessionStorage` (si perde chiudendo il browser/tab — dovrai rifare il login ogni tanto, ma senza scadenze fisse di 7 giorni)
-- Ogni submit scrive una riga in `Spese!A:D`: Data (`dd/MM`), Nome, Importo, Categoria
-- Il foglio `Spese Mensili` si aggiorna automaticamente tramite le formule già presenti
+- La webapp invia i dati della spesa a un URL Apps Script
+- Lo script è collegato al tuo Google Sheet e scrive la riga
+- Una chiave segreta condivisa tra webapp e script impedisce scritture non autorizzate
+- L'autenticazione con Google avviene una sola volta, quando pubblichi lo script — mai più dopo
 
-## Differenze rispetto all'app nativa
+---
 
-| | App iOS nativa | Web app |
-|---|---|---|
-| Rinnovo firma | Ogni 7 giorni | Mai |
-| Necessita Mac collegato | Sì, periodicamente | No |
-| Aggiornamenti | Reinstallare da Xcode | Ricarica la pagina |
-| Aspetto | Nativo iOS | Nativo (se installata da Safari) |
-| Login persistente | Sì (Keychain) | Solo per la sessione del browser |
+## Setup (15 minuti)
+
+### 1. Crea il progetto Apps Script
+
+1. Vai su https://script.google.com
+2. **Nuovo progetto**
+3. Cancella il codice di esempio nel file `Code.gs`
+4. Apri il file `AppsScript.gs` incluso in questo zip, copia tutto il contenuto e incollalo al posto del codice cancellato
+
+### 2. Imposta una chiave segreta
+
+Nel codice appena incollato, trova questa riga:
+
+```js
+const SECRET_KEY = "CAMBIA_QUESTA_CHIAVE_1234567890";
+```
+
+Sostituiscila con una stringa lunga e casuale a tua scelta (es. genera una password casuale di 32 caratteri). Questa chiave impedisce a chiunque altro di scrivere nel tuo foglio anche se scoprisse l'URL dello script.
+
+### 3. Testa lo script (opzionale ma consigliato)
+
+1. In alto nell'editor Apps Script, seleziona la funzione `testAppend` dal menu a tendina
+2. Premi ▶ Esegui
+3. La prima volta ti chiederà di autorizzare l'accesso al tuo Google Sheet — accetta (è il tuo account, una tantum)
+4. Controlla i log (Visualizza → Log) per vedere se ha trovato il foglio "Spese" correttamente
+
+### 4. Pubblica come Web App
+
+1. In alto a destra clicca **Esegui il deployment → Nuovo deployment**
+2. Clicca l'icona a ingranaggio accanto a "Seleziona tipo" → **App web**
+3. Configurazione:
+   - Descrizione: "Spesa API"
+   - Esegui come: **Me**
+   - Chi ha accesso: **Chiunque**
+4. **Esegui il deployment**
+5. Ti chiederà di nuovo di autorizzare — accetta
+6. Copia l'**URL web app** che appare (finisce con `/exec`)
+
+⚠️ Ogni volta che modifichi il codice dello script, devi creare un **nuovo deployment** (o gestire quello esistente → modifica versione) perché l'URL pubblicato resti aggiornato.
+
+### 5. Configura la webapp
+
+Apri `config.js` e incolla l'URL e la chiave:
+
+```js
+const CONFIG = {
+  scriptUrl: "https://script.google.com/macros/s/XXXXXXX/exec",
+  secretKey: "LA_STESSA_CHIAVE_CHE_HAI_MESSO_NELLO_SCRIPT"
+};
+```
+
+### 6. Carica su GitHub Pages (o dove preferisci)
+
+Stessa procedura di prima: carica tutti i file su un repository GitHub Pages, o qualsiasi hosting statico.
+
+### 7. Installa sulla home screen
+
+Apri l'URL in **Safari** sull'iPhone → icona condivisione → **Aggiungi a Home**.
+
+---
 
 ## File
 
 | File | Scopo |
 |---|---|
-| `index.html` | Struttura e stile dell'interfaccia |
-| `config.js` | Client ID Google e impostazioni foglio |
-| `categories.js` | Le 14 categorie con le rispettive emoji |
-| `sheets.js` | Autenticazione OAuth e chiamate API a Google Sheets |
-| `app.js` | Logica dell'interfaccia e gestione eventi |
-| `manifest.json` | Metadati per l'installazione come PWA |
-| `sw.js` | Service worker per il funzionamento offline dei file statici |
+| `AppsScript.gs` | Script da incollare in script.google.com — scrive nel foglio |
+| `index.html` | Interfaccia (nessuna schermata di login) |
+| `config.js` | URL dello script e chiave segreta |
+| `categories.js` | Le 14 categorie con emoji |
+| `sheets.js` | Chiamata fetch verso l'endpoint Apps Script |
+| `app.js` | Logica del form |
+| `manifest.json` / `sw.js` | Supporto PWA per l'installazione sulla home screen |
+
+## Note sulla sicurezza
+
+Chiunque conosca l'URL dello script *e* la chiave segreta può scrivere nel foglio. Non condividere l'URL pubblicamente. Per un uso strettamente personale questo livello di protezione è adeguato.

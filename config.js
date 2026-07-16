@@ -1,8 +1,5 @@
-// Fill in after creating a "Web application" OAuth client ID in Google Cloud Console.
-// This is a DIFFERENT client ID than the iOS one you created before.
+// URL che ottieni dopo aver pubblicato lo script come Web App (vedi README)
 const CONFIG = {
-  clientId: "469727421850-42ksebanraqj6hj144jpo9ii05b5u5ll.apps.googleusercontent.com",
-  spreadsheetId: "1dPJ71TdgfUUCy1_BzMt5XED1zkeC-nj5IMOFZIrJ_Ho",
-  sheetName: "Spese",
-  scope: "https://www.googleapis.com/auth/spreadsheets"
+  scriptUrl: "https://script.google.com/macros/s/AKfycbzteHyCOym7zLWKy6eBclnoHiL_0olSqai93q6x9egJZ5D0JeENRB-7Z2cDxa7pAJY/exec",
+  secretKey: "EmanueleFalli99*xyz@" // deve essere identica a SECRET_KEY in AppsScript.gs
 };

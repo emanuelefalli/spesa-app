@@ -12,8 +12,6 @@
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="theme-color" content="#000000">
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-
 <style>
   :root {
     --bg: #000000;
@@ -139,6 +137,10 @@
   .nav-button.left { text-align: left; }
   .nav-button.right { text-align: right; font-weight: 600; }
   .nav-button:disabled { color: var(--text-secondary); }
+
+  .navbar-spacer {
+    min-width: 60px;
+  }
 
   /* ---------- Form ---------- */
 
@@ -343,21 +345,10 @@
 
 <div id="app">
 
-  <!-- SIGN IN SCREEN -->
-  <div id="signinScreen" class="signin-screen">
-    <div class="signin-emoji">💶</div>
-    <div class="signin-title">Spesa</div>
-    <div class="signin-subtitle">Traccia le tue spese</div>
-    <div id="signinError" class="signin-error hidden"></div>
-    <button id="signinButton" class="signin-button">
-      <span>Accedi con Google</span>
-    </button>
-  </div>
-
   <!-- EXPENSE ENTRY SCREEN -->
-  <div id="entryScreen" class="hidden" style="display:flex; flex-direction:column; flex:1;">
+  <div id="entryScreen" style="display:flex; flex-direction:column; flex:1;">
     <div class="navbar">
-      <button id="signOutButton" class="nav-button left">Sign Out</button>
+      <div class="navbar-spacer"></div>
       <div id="navTitle" class="navbar-title">Nuova spesa</div>
       <button id="submitButton" class="nav-button right">Aggiungi</button>
     </div>
@@ -405,7 +396,7 @@
         <div class="section-header">Importo (€)</div>
         <div class="section-body">
           <div class="row">
-            <input type="text" id="amountInput" placeholder="0,00" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*">
+            <input type="number" id="amountInput" placeholder="0,00" inputmode="decimal" step="0.01">
           </div>
         </div>
       </div>
