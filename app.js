@@ -153,3 +153,43 @@ updateDateLabel();
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
+
+
+function applyWalletTransaction() {
+  const params = new URLSearchParams(window.location.search);
+
+  const rawAmount = params.get("amount");
+  const merchant = params.get("merchant");
+
+  // Only activate when opened by a Wallet transaction link.
+  if (rawAmount === null) return;
+
+  const normalized = rawAmount.trim().replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return;
+
+  const amount = Number(normalized);
+  if (!Number.isFinite(amount) || amount <= 0) return;
+
+  // This app currently stores amounts in EUR.
+  const currency = params.get("currency") || "EUR";
+  if (currency !== "EUR") {
+    showAlert("Valuta non supportata",
+              "Controlla e converti l'importo in EUR.");
+    return;
+  }
+
+  amountInput.value = amount.toFixed(2).replace(".", ",");
+
+  if (merchant) {
+    nameInput.value = merchant.slice(0, 150);
+  }
+
+  updateNavTitle();
+  updateSubmitState();
+
+  // Clear parameters to prevent restoring an old transaction.
+  history.replaceState(null, "", window.location.pathname);
+}
+
+applyWalletTransaction();
+
