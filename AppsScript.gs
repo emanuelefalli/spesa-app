@@ -3,15 +3,21 @@
 const SPREADSHEET_ID = "1dPJ71TdgfUUCy1_BzMt5XED1zkeC-nj5IMOFZIrJ_Ho";
 const SHEET_NAME = "Spese";
 
-// Cambia questa chiave con una stringa a tua scelta, lunga e casuale.
-// Deve essere identica al valore di SECRET_KEY in config.js della webapp.
-const SECRET_KEY = "EmanueleFalli99*xyz@";
+// La chiave segreta NON sta nel codice: impostala in
+// Impostazioni progetto → Proprietà script → SECRET_KEY (vedi README).
+const SECRET_KEY_PROPERTY = "SECRET_KEY";
 
 function doPost(e) {
   try {
     const params = JSON.parse(e.postData.contents);
 
-    if (params.key !== SECRET_KEY) {
+    const secretKey = PropertiesService.getScriptProperties().getProperty(SECRET_KEY_PROPERTY);
+
+    if (!secretKey) {
+      return jsonResponse({ success: false, error: "SECRET_KEY non configurata nelle Proprietà script" });
+    }
+
+    if (params.key !== secretKey) {
       return jsonResponse({ success: false, error: "Non autorizzato" });
     }
 
@@ -63,4 +69,5 @@ function testAppend() {
   const sheet = spreadsheet.getSheetByName(SHEET_NAME);
   Logger.log("Foglio trovato: " + sheet.getName());
   Logger.log("Ultima riga: " + sheet.getLastRow());
+  Logger.log("SECRET_KEY impostata: " + Boolean(PropertiesService.getScriptProperties().getProperty(SECRET_KEY_PROPERTY)));
 }

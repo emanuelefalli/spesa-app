@@ -1,5 +1,10 @@
 // ---------- Elements ----------
 
+const keyScreen      = document.getElementById("keyScreen");
+const keyInput       = document.getElementById("keyInput");
+const keySaveButton  = document.getElementById("keySaveButton");
+const keyError       = document.getElementById("keyError");
+
 const entryScreen    = document.getElementById("entryScreen");
 const submitButton   = document.getElementById("submitButton");
 const navTitle       = document.getElementById("navTitle");
@@ -14,6 +19,8 @@ const nameInput      = document.getElementById("nameInput");
 const categorySelect = document.getElementById("categorySelect");
 const amountInput    = document.getElementById("amountInput");
 const noteInput      = document.getElementById("noteInput");
+const giuliaCheckbox = document.getElementById("giuliaCheckbox");
+const giuliaHint     = document.getElementById("giuliaHint");
 
 const overlay        = document.getElementById("overlay");
 const alertTitle     = document.getElementById("alertTitle");
@@ -23,6 +30,48 @@ const alertButton    = document.getElementById("alertButton");
 // ---------- State ----------
 
 let submitting = false;
+
+// ---------- Secret key ----------
+
+function loadSecretKey() {
+  try {
+    return localStorage.getItem(CONFIG.secretKeyStorageName);
+  } catch (err) {
+    return null;
+  }
+}
+
+function saveSecretKey(secretKey) {
+  try {
+    localStorage.setItem(CONFIG.secretKeyStorageName, secretKey);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+function clearSecretKey() {
+  try {
+    localStorage.removeItem(CONFIG.secretKeyStorageName);
+  } catch (err) {
+    // Storage unavailable: nothing to clear.
+  }
+}
+
+function showKeyScreen(errorMessage) {
+  keyInput.value = "";
+  keySaveButton.disabled = true;
+  keyError.textContent = errorMessage || "";
+  keyError.classList.toggle("hidden", !errorMessage);
+  entryScreen.classList.add("hidden");
+  keyScreen.classList.remove("hidden");
+  keyInput.focus();
+}
+
+function showEntryScreen() {
+  keyScreen.classList.add("hidden");
+  entryScreen.classList.remove("hidden");
+}
 
 // ---------- Setup ----------
 
@@ -77,6 +126,30 @@ function parseAmount(raw) {
   return isNaN(value) ? null : value;
 }
 
+function halveToCents(amount) {
+  const amountInCents = Math.round(amount * 100);
+  return Math.round(amountInCents / 2) / 100;
+}
+
+function sheetAmount(amount) {
+  return giuliaCheckbox.checked ? halveToCents(amount) : amount;
+}
+
+function formatEuro(amount) {
+  return amount.toFixed(2).replace(".", ",") + " €";
+}
+
+function updateGiuliaHint() {
+  const amount = parseAmount(amountInput.value);
+
+  if (!giuliaCheckbox.checked || amount === null) {
+    giuliaHint.textContent = "Se selezionato, sul foglio va metà dell'importo.";
+    return;
+  }
+
+  giuliaHint.textContent = `Sul foglio: ${formatEuro(halveToCents(amount))}`;
+}
+
 function updateSubmitState() {
   const amount = parseAmount(amountInput.value);
   submitButton.disabled = amount === null || submitting;
@@ -86,9 +159,11 @@ function resetForm() {
   nameInput.value = "";
   amountInput.value = "";
   noteInput.value = "";
+  giuliaCheckbox.checked = false;
   dateInput.value = todayDateString();
   updateDateLabel();
   updateNavTitle();
+  updateGiuliaHint();
   updateSubmitState();
 }
 
@@ -109,14 +184,40 @@ nameInput.addEventListener("input", updateNavTitle);
 
 amountInput.addEventListener("input", () => {
   amountInput.value = amountInput.value.replace(/[^0-9.,]/g, "");
+  updateGiuliaHint();
   updateSubmitState();
 });
 
+giuliaCheckbox.addEventListener("change", updateGiuliaHint);
+
 alertButton.addEventListener("click", hideAlert);
+
+keyInput.addEventListener("input", () => {
+  keySaveButton.disabled = keyInput.value.trim() === "";
+});
+
+keySaveButton.addEventListener("click", () => {
+  const secretKey = keyInput.value.trim();
+  if (secretKey === "") return;
+
+  if (!saveSecretKey(secretKey)) {
+    showKeyScreen("Impossibile salvare la chiave su questo browser.");
+    return;
+  }
+
+  keyInput.value = "";
+  showEntryScreen();
+});
 
 submitButton.addEventListener("click", async () => {
   const amount = parseAmount(amountInput.value);
   if (amount === null || submitting) return;
+
+  const secretKey = loadSecretKey();
+  if (secretKey === null) {
+    showKeyScreen();
+    return;
+  }
 
   submitting = true;
   updateSubmitState();
@@ -127,15 +228,21 @@ submitButton.addEventListener("click", async () => {
 
   try {
     await SheetsClient.appendExpense({
+      secretKey: secretKey,
       date: dateInput.value,
       name: name,
-      amount: amount,
+      amount: sheetAmount(amount),
       category: categorySelect.value
     });
 
     resetForm();
     showAlert("Salvato", "Spesa aggiunta al foglio.");
   } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      clearSecretKey();
+      showKeyScreen("Chiave non valida. Inseriscila di nuovo: la spesa non è stata salvata.");
+      return;
+    }
     showAlert("Errore", err.message || "Si è verificato un errore.");
   } finally {
     submitting = false;
@@ -149,6 +256,12 @@ submitButton.addEventListener("click", async () => {
 populateCategories();
 dateInput.value = todayDateString();
 updateDateLabel();
+
+if (loadSecretKey() === null) {
+  showKeyScreen();
+} else {
+  showEntryScreen();
+}
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});

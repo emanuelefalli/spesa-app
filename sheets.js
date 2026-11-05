@@ -1,11 +1,13 @@
+class UnauthorizedError extends Error {}
+
 const SheetsClient = {
-  async appendExpense({ date, name, amount, category }) {
+  async appendExpense({ secretKey, date, name, amount, category }) {
     const response = await fetch(CONFIG.scriptUrl, {
       method: "POST",
       // text/plain avoids a CORS preflight, which Apps Script web apps don't handle
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
-        key: CONFIG.secretKey,
+        key: secretKey,
         date: date,
         name: name,
         amount: amount,
@@ -19,10 +21,14 @@ const SheetsClient = {
 
     const result = await response.json();
 
-    if (!result.success) {
-      throw new Error(result.error || "Errore sconosciuto dal foglio");
+    if (result.success) {
+      return result;
     }
 
-    return result;
+    if (result.error === "Non autorizzato") {
+      throw new UnauthorizedError("Chiave segreta non valida.");
+    }
+
+    throw new Error(result.error || "Errore sconosciuto dal foglio");
   }
 };
