@@ -99,6 +99,24 @@
     max-width: 320px;
   }
 
+  .key-input {
+    width: 100%;
+    max-width: 320px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    background: var(--surface);
+    border: 0.5px solid var(--separator);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 17px;
+    font-family: inherit;
+    outline: none;
+  }
+
+  .signin-button:disabled {
+    opacity: 0.5;
+  }
+
   /* ---------- Nav bar ---------- */
 
   .navbar {
@@ -274,6 +292,25 @@
     margin-left: 8px;
   }
 
+  .checkbox-row {
+    justify-content: space-between;
+    font-size: 17px;
+    cursor: pointer;
+  }
+
+  input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    accent-color: var(--accent);
+  }
+
+  .section-footer {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 6px 16px 0 16px;
+  }
+
   /* ---------- Toast / Alert ---------- */
 
   .overlay {
@@ -345,8 +382,18 @@
 
 <div id="app">
 
+  <!-- SECRET KEY SCREEN -->
+  <div id="keyScreen" class="signin-screen hidden">
+    <div class="signin-emoji">🔑</div>
+    <h1 class="signin-title">Chiave segreta</h1>
+    <p class="signin-subtitle">Inseriscila una volta: resta salvata solo su questo dispositivo.</p>
+    <div id="keyError" class="signin-error hidden"></div>
+    <input type="password" id="keyInput" class="key-input" placeholder="Chiave" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button id="keySaveButton" class="signin-button" disabled>Salva</button>
+  </div>
+
   <!-- EXPENSE ENTRY SCREEN -->
-  <div id="entryScreen" style="display:flex; flex-direction:column; flex:1;">
+  <div id="entryScreen" class="hidden" style="display:flex; flex-direction:column; flex:1;">
     <div class="navbar">
       <div class="navbar-spacer"></div>
       <div id="navTitle" class="navbar-title">Nuova spesa</div>
@@ -399,6 +446,16 @@
             <input type="text" id="amountInput" placeholder="0,00" inputmode="decimal">
           </div>
         </div>
+      </div>
+
+      <div class="section">
+        <div class="section-body">
+          <label class="row checkbox-row" for="giuliaCheckbox">
+            <span>Giulia</span>
+            <input type="checkbox" id="giuliaCheckbox">
+          </label>
+        </div>
+        <div id="giuliaHint" class="section-footer">Se selezionato, sul foglio va metà dell'importo.</div>
       </div>
 
       <div class="section">

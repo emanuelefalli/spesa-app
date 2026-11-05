@@ -1,4 +1,4 @@
-const CACHE_NAME = "spesa-v5";
+const CACHE_NAME = "spesa-v6";
 const ASSETS = [
   "./",
   "./index.html",
@@ -25,8 +25,8 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Network-first for API calls, cache-first for static assets
-  if (event.request.url.includes("googleapis.com")) {
+  // Only static assets are cached; API POSTs to Apps Script go straight to the network
+  if (event.request.method !== "GET") {
     return;
   }
   event.respondWith(
